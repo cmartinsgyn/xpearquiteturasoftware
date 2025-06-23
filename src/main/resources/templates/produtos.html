@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Produtos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    <h2>Cadastro de Produto</h2>
+    <form id="produtoForm" class="row g-3 mb-4">
+        <input type="hidden" id="id" name="id">
+        <div class="col-md-4">
+            <label for="nome" class="form-label">Nome</label>
+            <input type="text" class="form-control" id="nome" name="nome" required>
+        </div>
+        <div class="col-md-4">
+            <label for="descricao" class="form-label">Descrição</label>
+            <input type="text" class="form-control" id="descricao" name="descricao">
+        </div>
+        <div class="col-md-2">
+            <label for="preco" class="form-label">Preço</label>
+            <input type="number" step="0.01" class="form-control" id="preco" name="preco" required>
+        </div>
+        <div class="col-md-2">
+            <label for="quantidade" class="form-label">Quantidade</label>
+            <input type="number" class="form-control" id="quantidade" name="quantidade" required>
+        </div>
+        <div class="col-md-3">
+            <label for="codigo" class="form-label">Código</label>
+            <input type="text" class="form-control" id="codigo" name="codigo">
+        </div>
+        <div class="col-md-3">
+            <label for="sku" class="form-label">SKU</label>
+            <input type="text" class="form-control" id="sku" name="sku">
+        </div>
+        <div class="col-12 mt-3">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <button type="reset" class="btn btn-secondary">Limpar</button>
+        </div>
+    </form>
+
+    <h2>Lista de Produtos</h2>
+    <table class="table table-striped" id="produtosTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Descrição</th>
+                <th>Preço</th>
+                <th>Quantidade</th>
+                <th>Código</th>
+                <th>SKU</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Os produtos serão inseridos aqui via JavaScript -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // Função para carregar produtos
+    function carregarProdutos() {
+        fetch('/produtos')
+            .then(response => response.json())
+            .then(produtos => {
+                const tbody = document.querySelector('#produtosTable tbody');
+                tbody.innerHTML = '';
+                produtos.forEach(produto => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${produto.id}</td>
+                            <td>${produto.nome}</td>
+                            <td>${produto.descricao || ''}</td>
+                            <td>${produto.preco}</td>
+                            <td>${produto.quantidade}</td>
+                            <td>${produto.codigo || ''}</td>
+                            <td>${produto.sku || ''}</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning" onclick="editarProduto(${produto.id})">Editar</button>
+                                <button class="btn btn-sm btn-danger" onclick="removerProduto(${produto.id})">Remover</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+    }
+
+    // Função para salvar produto
+    document.getElementById('produtoForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const produto = {
+            id: document.getElementById('id').value || null,
+            nome: document.getElementById('nome').value,
+            descricao: document.getElementById('descricao').value,
+            preco: document.getElementById('preco').value,
+            quantidade: document.getElementById('quantidade').value,
+            codigo: document.getElementById('codigo').value,
+            sku: document.getElementById('sku').value
+        };
+        fetch('/produtos', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(produto)
+        })
+        .then(() => {
+            carregarProdutos();
+            this.reset();
+        });
+    });
+
+    // Função para editar produto
+    function editarProduto(id) {
+        fetch(`/produtos/${id}`)
+            .then(response => response.json())
+            .then(produto => {
+                document.getElementById('id').value = produto.id;
+                document.getElementById('nome').value = produto.nome;
+                document.getElementById('descricao').value = produto.descricao;
+                document.getElementById('preco').value = produto.preco;
+                document.getElementById('quantidade').value = produto.quantidade;
+                document.getElementById('codigo').value = produto.codigo;
+                document.getElementById('sku').value = produto.sku;
+            });
+    }
+
+    // Função para remover produto
+    function removerProduto(id) {
+        if(confirm('Deseja realmente remover este produto?')) {
+            fetch(`/produtos/${id}`, { method: 'DELETE' })
+                .then(() => carregarProdutos());
+        }
+    }
+
+    // Carregar produtos ao iniciar
+    carregarProdutos();
+</script>
+</body>
+</html>
